@@ -5,7 +5,8 @@ const token = 'token'
 client.login(token);
 console.log('test')
 client.on('ready', () =>{
-    console.log('This bot is online');
+  client.channels.get('629526736631103489').send('BOT ONLINE!');
+  console.log('This bot is online');
 })
 function getRandomInt(max) {
     return Math.floor(Math.random() * Math.floor(max));
@@ -49,9 +50,11 @@ client.on("message", msg=> {
       msg.reply("Cya!");
     }
     //love club quiz//
-    if (msg.content === "dere quiz") {
+    if (msg.content.toLocaleLowerCase() === "dere quiz") {
       newQuizUser(msg);
-      msg.reply("Say 'start dere quiz' to start. *Quiz user info sent to terminal*");
+    }
+    if (msg.content.toLocaleLowerCase() == "dere question"){
+      startQuiz(msg);
     }
   });
 //Love Club Quiz//
@@ -71,9 +74,33 @@ class Questions {
     this.eScore = eScore;
   }
 }
-const startQuiz = function(msg){
-
+const startQuiz = msg=> {
+  let user = quizUsers.find(x => x.id === msg.author.id);
+  let qNum = getRandomInt(user.userQuestions.length - 1)
+  console.log(user.username);
+  msg.reply('**' + user.userQuestions[qNum].question +'**');
+  msg.reply('*' + user.userQuestions[qNum].answerA +'*')
+  msg.reply('*' + user.userQuestions[qNum].answerB +'*')
+  msg.reply('*' + user.userQuestions[qNum].answerC +'*')
+  msg.reply('*' + user.userQuestions[qNum].answerD +'*')
+  let filter = msg => msg.author.id == user.id && 
+    (msg.content.toLowerCase() === 'a'||
+    msg.content.toLowerCase() === 'b'||
+    msg.content.toLowerCase() === 'c'||
+    msg.content.toLowerCase() === 'd')
+  
+  msg.channel.awaitMessages(filter, {max: 1, time: 20000})
+    .then(collected => {
+      let answer = (collected.array())
+      console.log(answer[0].content)
+      msg.reply('Confirmed!')
+    })
+    .catch(collected => {
+      console.log("CATCH")
+    });
 }
+
+//quiz taker
 class QuizUser {
   constructor(username, id, score = [], userQuestions = [], status) {
     this.username = username;
@@ -83,6 +110,19 @@ class QuizUser {
     this.status = status
   }
 }
+
+let quizUsers = [];
+const newQuizUser = function(msg){
+  console.log(msg.author.id, msg.author.username);
+  if (quizUsers.some(x => x.id === msg.author.id) === true){
+    msg.reply("You already started just say 'dere question'")
+    return
+  }
+  else
+  quizUsers.push (new QuizUser (msg.author.username, msg.author.id, score = [0,0,0,0], userQuestions = questions, "not started"))
+  msg.reply("Say 'dere question' to start. *Quiz user info sent to terminal*");
+}
+//questions
 let questions = [];
 questions.push(new Questions(1, "Choose a dagger:", "A) A Golden Dagger", "hime", "B) A Concealable Dagger", "dan", "C) My Fist as a Dagger", "kuu", "D) A Serrated Dagger", "tsun", "E) The Dagger I Put in you..", "yan"));
 questions.push(new Questions(2, "Which is the worst scenario:", "A) Tripping in front of your crush.", "tsun", "B) Getting caught staring at someone.", "dan", "C) Running into your crush when you're having a bad hair day.", "hime", "D) Slightly giggling from a lame joke.", "kuu", "E) Getting blood on your uniform.", "yan"));
@@ -99,10 +139,3 @@ questions.push(new Questions(12, "I am most proud of:", "A) My achievements", "k
 questions.push(new Questions(13, "My outfit style is usually:", "A) Oversized and layered", "Dan", "B) Exactly what my lover wants it to be.", "yan", "C) Whatever I feel like.", "tsun", "D) Trendy and brand named.", "hime", "E) Fitted.", "kuu"));
 questions.push(new Questions(14, "My top priorities are:", "A) None of your business.", "kuu", "B) Knowing how large a crowd is at an event.", "dan", "C) Me, Myself and I,", "hime", "D) Making sure I have the best comebacks ready.", "tsun", "E) Eliminating the competition.", "yan"));
 questions.push(new Questions(15, "Pick at tattoo to get:", "A) Large Back Dragon Tattoo.", "kuu", "B) A Rose.", "hime", "C) Lion sleeve tattoo with cherry blossom petals.", "tsun", "D) The name of the person I love.", "yan", "E) A small hidden animal chibi.", "dan"));
-
-let quizUsers = [];
-const newQuizUser = function(msg){
-  console.log(msg.author.id, msg.author.username);
-  quizUsers.push (new QuizUser (msg.author.username, msg.author.id, score = [0,0,0,0], userQuestions = questions, "off"))
-  console.log(quizUsers[0])
-}
